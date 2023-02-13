@@ -1,7 +1,13 @@
-import { FC } from 'react';
+import { FC, useContext, useEffect, useState } from 'react';
 import JoditReact from 'jodit-react-ts';
 import { Jodit } from 'jodit';
 import 'jodit/build/jodit.min.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { dataChange } from '../store/slices/EditorSlice';
+import { Button } from '@mui/material';
+import axios from 'axios';
+import './TextEditor.css'
+import { WebsocketContext } from '../WebscoketContext';
 
 interface IProps {
     content: string;
@@ -97,23 +103,71 @@ Jodit.defaultOptions.controls.change = {
 }
 
 
+
+
+
 const TextEditor: FC<IProps> = ({content, setContent}) => {
+    
+    const [websocketData, setWebsocketData] = useState<any>();
+    const data = useSelector((state: any) => state.draft);
+    const dispatch = useDispatch();
 
+    const socket = useContext(WebsocketContext);
 
+    useEffect(() => {
+
+        socket.on('connect', () => {
+           console.log('Connected!'); 
+        });
+
+        socket.emit('ReqFullData')
+
+        socket.on('ResFullData', (data) => {
+            setWebsocketData(data);
+        });
+
+        return () => {
+            socket.off('connect');
+            socket.off('ReqFullData');
+        } 
+
+    }, [])
+    
+    
     const handleChange = (dispatchValue: string) => {
-        setContent(dispatchValue);
+        dispatch(dataChange(dispatchValue));
+    }
+    
+    
+    const SaveChanges = () => {
+        socket.emit('ReqAddingData', data);
     }
 
     const config = {
-        theme: 'dark',
-        extraButtons: ['doctor', 'offer', 'today', 'insert', 'change' ]
+        extraButtons: ['doctor', 'offer', 'today', 'insert', 'change' ],
+        uploader: {
+            insertImageAsBase64URI: true
+        },
+        showCharsCounter: false,
+        showWordsCounter: false,
+        showXPathInStatusbar: false,
+        hidePoweredByJodit: true,
+        cleanHTML: {
+            fillEmptyParagraph: false,
+            nl2brInPlainText: false,
+        }
     }
 
     
     return(
         <div>
             <div style={{ height: "500px", width: '90vw', margin: 'auto' }}>
+                <Button style={{marginBottom: "10px"}} variant='contained' onClick={() => SaveChanges()}>Сохранить</Button>
                 <JoditReact defaultValue={content} onChange={(value: string) => handleChange(value) } config={config} />
+
+                <div className='ExistDataBlock'>
+                    {websocketData ? websocketData.map((el: any) => <div key={el._id} dangerouslySetInnerHTML={{__html: el.data}}></div>) : ""}
+                </div>
             </div>
         </div>
     )
@@ -121,3 +175,7 @@ const TextEditor: FC<IProps> = ({content, setContent}) => {
 
 
 export default TextEditor;
+
+function openSocket(arg0: string, arg1: { transports: string[]; }) {
+    throw new Error('Function not implemented.');
+}

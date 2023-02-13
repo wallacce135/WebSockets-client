@@ -1,15 +1,26 @@
 
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { Tab } from '@mui/material';
-import { FC, useState, useRef, useMemo, BaseSyntheticEvent } from 'react';
+import { FC, useState, useRef, useMemo, BaseSyntheticEvent, useEffect } from 'react';
 // import './App.css';
 import HTMLEditor from './Editors/HTMLEditor';
 import TextEditor from './Editors/TextEditor';
 
+
+
 const App: FC = () => {
 
-  const [content, setContent] = useState<string>('{"ФИО" : "Иванов Сергей", "Адрес" : { "Город" : "Москва", "Улица" : "Пятницкая", "Дом" : "35" }}');
+  // useEffect(() => {
+  //   navigator.clipboard.readText().then(text => {
+
+  //     setContent(text);
+      
+  //   })
+  // }, []);
+  
+  const [content, setContent] = useState<any>('');
   const [tabValue, setTabValue] = useState<string>('1');
+
 
   const handleChangeTab = (event: BaseSyntheticEvent, value: string) => {
     setTabValue(value);
